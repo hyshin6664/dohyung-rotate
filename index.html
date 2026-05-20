@@ -33,16 +33,18 @@
   /* ===== 도형 그리기 ===== */
   .draw-top{flex-shrink:0}
   .draw-hint{background:#fff8e8;border:2px dashed #e6c98f;border-radius:10px;padding:8px;font-size:clamp(13px,1.8vw,16px);color:#5a3a10;text-align:center;font-weight:700}
-  .draw-wrap{display:flex;justify-content:center;align-items:center;flex:1;min-height:0;min-width:0}
+  .draw-main{display:grid;grid-template-columns:minmax(0,1fr) clamp(150px, 22%, 240px);gap:10px;flex:1;min-height:0}
+  .draw-wrap{display:flex;justify-content:center;align-items:center;min-height:0;min-width:0}
   .draw-stage{background:#fff;border:3px dashed #c9a878;border-radius:14px;padding:4px;display:block}
   .draw-stage svg{display:block;touch-action:none;cursor:crosshair}
   .dot{fill:#cdb88a}
   .dot.hot{fill:#c0421f}
-  .dot-tap{fill:transparent;cursor:pointer}
   .draw-line{stroke:#c0421f;stroke-width:5;stroke-linejoin:round;stroke-linecap:round;fill:none}
   .draw-fill{fill:#ffd9c2;fill-opacity:.6;stroke:#c0421f;stroke-width:5;stroke-linejoin:round}
-  .draw-controls{display:grid;grid-template-columns:repeat(2,1fr);gap:6px;flex-shrink:0}
-  .draw-controls .btn{padding:8px;min-height:50px}
+  .draw-controls{display:flex;flex-direction:column;gap:10px;min-height:0;min-width:0}
+  .draw-controls .btn{flex:1;min-height:0;padding:8px;font-size:clamp(14px,2vw,20px)}
+  .draw-controls .btn b{font-size:clamp(16px,2.4vw,24px)}
+  .draw-controls .btn small{font-size:clamp(11px,1.4vw,14px);margin-top:4px}
 
   /* ===== 돌리기 화면 ===== */
   .play-wrap{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:10px;flex:1;min-height:0}
@@ -107,7 +109,7 @@
 <body>
 <header>
   <h1>🔄 도형 돌리고 뒤집기</h1>
-  <span class="ver">v2.3</span>
+  <span class="ver">v2.4</span>
 </header>
 
 <nav class="tabs">
@@ -120,15 +122,17 @@
   <div class="draw-top">
     <div class="draw-hint" id="drawHint">손가락으로 쓱~ 그려봐. 격자에 자동으로 맞춰줄게!</div>
   </div>
-  <div class="draw-wrap">
-    <div class="draw-stage">
-      <svg id="drawSvg" viewBox="0 0 600 600"></svg>
+  <div class="draw-main">
+    <div class="draw-wrap">
+      <div class="draw-stage">
+        <svg id="drawSvg" viewBox="0 0 600 600"></svg>
+      </div>
     </div>
-  </div>
-  <div class="draw-controls">
-    <button class="btn move" id="drawUndo"><b>↶ 한 점 되돌리기</b></button>
-    <button class="btn flip" id="drawClear"><b>✖ 다 지우기</b></button>
-    <button class="btn reset" id="drawDone" style="grid-column:span 2"><b>✅ 완성! 돌리러 가기 ➡</b></button>
+    <div class="draw-controls">
+      <button class="btn move" id="drawUndo"><b>↶ 되돌리기</b><small>한 점</small></button>
+      <button class="btn flip" id="drawClear"><b>✖ 다 지우기</b></button>
+      <button class="btn reset" id="drawDone"><b>✅ 완성!</b><small>돌리러 가기 ➡</small></button>
+    </div>
   </div>
 </section>
 
