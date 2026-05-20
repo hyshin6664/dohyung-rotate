@@ -53,7 +53,8 @@
   .grid line{stroke:#d9c7a5;stroke-width:1.5;stroke-dasharray:4 4}
   .axis{stroke:#b58a4a;stroke-width:2}
   .ghost{fill:#f1e7d3;stroke:#b8a47a;stroke-width:2.5;stroke-dasharray:6 5}
-  .shape-g{transform-origin:300px 300px;transition:transform .55s cubic-bezier(.5,.05,.3,1)}
+  .rotate-all{transform-origin:300px 300px;transition:transform .55s cubic-bezier(.5,.05,.3,1)}
+  .shape-g{transform-origin:300px 300px;transition:transform .35s ease}
   .shape{fill:#ffd9c2;stroke:#c0421f;stroke-width:3.5;stroke-linejoin:round}
 
   .panel{display:flex;flex-direction:column;gap:6px;min-height:0;overflow:hidden}
@@ -106,7 +107,7 @@
 <body>
 <header>
   <h1>🔄 도형 돌리고 뒤집기</h1>
-  <span class="ver">v2.1</span>
+  <span class="ver">v2.2</span>
 </header>
 
 <nav class="tabs">
@@ -137,9 +138,11 @@
     <div class="stage-wrap">
       <div class="stage">
         <svg id="stage" viewBox="0 0 600 600">
-          <g class="grid" id="grid"></g>
           <g><polygon class="ghost" id="ghost"></polygon></g>
-          <g class="shape-g" id="shapeG"><polygon class="shape" id="shape"></polygon></g>
+          <g id="rotateAll" class="rotate-all">
+            <g class="grid" id="grid"></g>
+            <g class="shape-g" id="shapeG"><polygon class="shape" id="shape"></polygon></g>
+          </g>
         </svg>
       </div>
     </div>
@@ -158,10 +161,8 @@
         <button class="btn flip" data-flip="R"><b>➡ 오른쪽</b><small>뒤집기</small></button>
         <button class="btn flip" data-flip="U"><b>⬆ 위</b><small>뒤집기</small></button>
         <button class="btn flip" data-flip="D"><b>⬇ 아래</b><small>뒤집기</small></button>
-        <button class="btn move" data-mv="L"><b>⬅ 왼쪽</b><small>한 칸 이동</small></button>
-        <button class="btn move" data-mv="R"><b>➡ 오른쪽</b><small>한 칸 이동</small></button>
-        <button class="btn move" data-mv="U"><b>⬆ 위로</b><small>한 칸 이동</small></button>
-        <button class="btn move" data-mv="D"><b>⬇ 아래로</b><small>한 칸 이동</small></button>
+        <button class="btn move" data-mv="L" style="grid-column:span 2"><b>⬅ 왼쪽으로 이동</b></button>
+        <button class="btn move" data-mv="R" style="grid-column:span 2"><b>➡ 오른쪽으로 이동</b></button>
         <button class="btn reset" id="reset"><b>🔄 처음으로</b></button>
       </div>
     </div>
@@ -449,9 +450,11 @@ function openPlay(s){
   switchTab('play');
 }
 function applyTransform(){
-  // 이동(translate)은 격자 칸 단위 픽셀로 환산. 회전/뒤집기 전에 적용되도록 순서는 translate -> rotate -> scale
   const tpx = state.tx * CELL, tpy = state.ty * CELL;
-  shapeG.style.transform = `translate(${tpx}px, ${tpy}px) rotate(${state.rot}deg) scaleX(${state.fx}) scaleY(${state.fy})`;
+  // 회전은 격자+도형 같이 (rotateAll 그룹), 이동·뒤집기는 도형만
+  const rotEl = document.getElementById('rotateAll');
+  if(rotEl) rotEl.style.transform = `rotate(${state.rot}deg)`;
+  shapeG.style.transform = `translate(${tpx}px, ${tpy}px) scaleX(${state.fx}) scaleY(${state.fy})`;
 }
 function updateStatus(){
   let r = ((state.rot%360)+360)%360;
@@ -472,10 +475,11 @@ document.querySelectorAll('[data-rot]').forEach(b=>{
     applyTransform();
     setTimeout(()=>{
       if(Math.abs(state.rot) >= 720){
-        shapeG.style.transition='none';
+        const rotEl = document.getElementById('rotateAll');
+        if(rotEl) rotEl.style.transition='none';
         state.rot = state.rot % 360;
         applyTransform();
-        requestAnimationFrame(()=>{shapeG.style.transition='';});
+        requestAnimationFrame(()=>{ if(rotEl) rotEl.style.transition=''; });
       }
       updateStatus();
     }, 560);
