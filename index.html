@@ -10,6 +10,7 @@
     --btn:#ffe9d6;--btn-b:#ffb88c;
     --btn-flip:#dcefff;--btn-flip-b:#86bdff;
     --btn-ccw:#fff0e0;
+    --btn-move:#e6e0ff;--btn-move-b:#9b8be5;
   }
   *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;user-select:none;-webkit-user-select:none}
   html,body{margin:0;padding:0;background:var(--bg);color:#2b2b2b;font-family:"Pretendard","Noto Sans KR","맑은 고딕",sans-serif;overscroll-behavior:none;overflow:hidden}
@@ -64,6 +65,8 @@
   .btn.ccw{background:var(--btn-ccw)}
   .btn.flip{background:var(--btn-flip);border-color:var(--btn-flip-b);box-shadow:0 3px 0 var(--btn-flip-b);color:#1e3e6c}
   .btn.flip:active{box-shadow:0 1px 0 var(--btn-flip-b)}
+  .btn.move{background:var(--btn-move);border-color:var(--btn-move-b);box-shadow:0 3px 0 var(--btn-move-b);color:#3a2c6c}
+  .btn.move:active{box-shadow:0 1px 0 var(--btn-move-b)}
   .btn.reset{background:#e9f8df;border-color:#9fcf7e;box-shadow:0 3px 0 #9fcf7e;color:#234a13;grid-column:span 4;flex-direction:row;gap:6px}
   .btn.reset:active{box-shadow:0 1px 0 #9fcf7e}
   .btn.reset b{font-size:clamp(14px,1.9vw,17px)}
@@ -99,7 +102,7 @@
 <body>
 <header>
   <h1>🔄 도형 돌리고 뒤집기</h1>
-  <span class="ver">v1.5</span>
+  <span class="ver">v1.6</span>
 </header>
 
 <nav class="tabs">
@@ -140,6 +143,10 @@
         <button class="btn flip" data-flip="R"><b>➡ 오른쪽</b><small>뒤집기</small></button>
         <button class="btn flip" data-flip="U"><b>⬆ 위</b><small>뒤집기</small></button>
         <button class="btn flip" data-flip="D"><b>⬇ 아래</b><small>뒤집기</small></button>
+        <button class="btn move" data-mv="L"><b>⬅ 왼쪽</b><small>한 칸 이동</small></button>
+        <button class="btn move" data-mv="R"><b>➡ 오른쪽</b><small>한 칸 이동</small></button>
+        <button class="btn move" data-mv="U"><b>⬆ 위로</b><small>한 칸 이동</small></button>
+        <button class="btn move" data-mv="D"><b>⬇ 아래로</b><small>한 칸 이동</small></button>
         <button class="btn reset" id="reset"><b>🔄 처음으로</b></button>
       </div>
     </div>
@@ -193,7 +200,8 @@ const SHAPES = [
   { id:'PAR',  name:'평행사변형', pts:[[1,5],[3,1],[5,1],[3,5]] },
   { id:'T',    name:'T자',       pts:[[1,1],[5,1],[5,2],[4,2],[4,5],[2,5],[2,2],[1,2]] },
   { id:'PENT', name:'오각형',    pts:[[1,3],[3,1],[5,2],[5,5],[2,5]] },
-  { id:'Z',    name:'Z자',       pts:[[1,1],[4,1],[4,3],[5,3],[5,5],[2,5],[2,3],[1,3]] }
+  { id:'Z',    name:'Z자',       pts:[[1,1],[4,1],[4,3],[5,3],[5,5],[2,5],[2,3],[1,3]] },
+  { id:'RHOMB',name:'마름모',    pts:[[3,1],[5,3],[3,5],[1,3]] }
 ];
 
 const shapesEl = document.getElementById('shapes');
@@ -217,7 +225,7 @@ for(let i=0;i<=GRID;i++){
   if(i===0||i===GRID) h.setAttribute('class','axis');
 }
 
-let state = { rot:0, fx:1, fy:1, current:null };
+let state = { rot:0, fx:1, fy:1, tx:0, ty:0, current:null };
 const shapeEl = document.getElementById('shape');
 const ghostEl = document.getElementById('ghost');
 const shapeG = document.getElementById('shapeG');
@@ -226,7 +234,7 @@ const curnameEl = document.getElementById('curname');
 
 function openPlay(s){
   state.current = s;
-  state.rot = 0; state.fx = 1; state.fy = 1;
+  state.rot = 0; state.fx = 1; state.fy = 1; state.tx = 0; state.ty = 0;
   const pointsStr = s.pts.map(p=>`${toX(p[0])},${toY(p[1])}`).join(' ');
   shapeEl.setAttribute('points', pointsStr);
   ghostEl.setAttribute('points', pointsStr);
@@ -239,14 +247,21 @@ function openPlay(s){
   switchTab('play');
 }
 function applyTransform(){
-  shapeG.style.transform = `rotate(${state.rot}deg) scaleX(${state.fx}) scaleY(${state.fy})`;
+  // 이동(translate)은 격자 칸 단위 픽셀로 환산. 회전/뒤집기 전에 적용되도록 순서는 translate -> rotate -> scale
+  const tpx = state.tx * CELL, tpy = state.ty * CELL;
+  shapeG.style.transform = `translate(${tpx}px, ${tpy}px) rotate(${state.rot}deg) scaleX(${state.fx}) scaleY(${state.fy})`;
 }
 function updateStatus(){
   let r = ((state.rot%360)+360)%360;
   let txt = `<span class="pill">회전 <b>${r}°</b></span>`;
   if(state.fx===-1) txt += `<span class="pill">↔ 좌우뒤집힘</span>`;
   if(state.fy===-1) txt += `<span class="pill">↕ 상하뒤집힘</span>`;
-  if(r===0 && state.fx===1 && state.fy===1) txt = `<span class="pill">처음 상태</span>`;
+  if(state.tx || state.ty){
+    const xs = state.tx>0?`오른쪽 ${state.tx}칸`:(state.tx<0?`왼쪽 ${-state.tx}칸`:'');
+    const ys = state.ty>0?`아래 ${state.ty}칸`:(state.ty<0?`위 ${-state.ty}칸`:'');
+    txt += `<span class="pill">이동 <b>${[xs,ys].filter(Boolean).join(' · ')}</b></span>`;
+  }
+  if(r===0 && state.fx===1 && state.fy===1 && state.tx===0 && state.ty===0) txt = `<span class="pill">처음 상태</span>`;
   statusEl.innerHTML = txt;
 }
 document.querySelectorAll('[data-rot]').forEach(b=>{
@@ -273,8 +288,22 @@ document.querySelectorAll('[data-flip]').forEach(b=>{
     setTimeout(updateStatus, 560);
   };
 });
+document.querySelectorAll('[data-mv]').forEach(b=>{
+  b.onclick = ()=>{
+    const d = b.dataset.mv;
+    if(d==='L') state.tx -= 1;
+    if(d==='R') state.tx += 1;
+    if(d==='U') state.ty -= 1;
+    if(d==='D') state.ty += 1;
+    // 격자 밖으로 너무 안 나가게 살짝 제한 (±4칸)
+    state.tx = Math.max(-4, Math.min(4, state.tx));
+    state.ty = Math.max(-4, Math.min(4, state.ty));
+    applyTransform();
+    setTimeout(updateStatus, 360);
+  };
+});
 document.getElementById('reset').onclick = ()=>{
-  state.rot = 0; state.fx = 1; state.fy = 1;
+  state.rot = 0; state.fx = 1; state.fy = 1; state.tx = 0; state.ty = 0;
   applyTransform();
   setTimeout(updateStatus, 560);
 };
