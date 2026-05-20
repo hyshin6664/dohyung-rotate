@@ -7,9 +7,9 @@
 <style>
   :root{
     --bg:#fff7ec;
-    --btn:#ffe9d6;--btn-b:#ffb88c;
+    --btn:#ffd6b3;--btn-b:#ff944d;
     --btn-flip:#dcefff;--btn-flip-b:#86bdff;
-    --btn-ccw:#fff0e0;
+    --btn-ccw:#fff4b3;--btn-ccw-b:#e6b800;
     --btn-move:#e6e0ff;--btn-move-b:#9b8be5;
   }
   *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;user-select:none;-webkit-user-select:none}
@@ -69,7 +69,8 @@
   .btn:active{transform:translateY(2px);box-shadow:0 1px 0 var(--btn-b)}
   .btn b{font-size:clamp(13px,1.8vw,17px)}
   .btn small{font-size:clamp(9px,1.2vw,11px);font-weight:700;opacity:.85}
-  .btn.ccw{background:var(--btn-ccw)}
+  .btn.ccw{background:var(--btn-ccw);border-color:var(--btn-ccw-b);box-shadow:0 3px 0 var(--btn-ccw-b);color:#6a4a0a}
+  .btn.ccw:active{box-shadow:0 1px 0 var(--btn-ccw-b)}
   .btn.flip{background:var(--btn-flip);border-color:var(--btn-flip-b);box-shadow:0 3px 0 var(--btn-flip-b);color:#1e3e6c}
   .btn.flip:active{box-shadow:0 1px 0 var(--btn-flip-b)}
   .btn.move{background:var(--btn-move);border-color:var(--btn-move-b);box-shadow:0 3px 0 var(--btn-move-b);color:#3a2c6c}
@@ -109,7 +110,7 @@
 <body>
 <header>
   <h1>🔄 도형 돌리고 뒤집기</h1>
-  <span class="ver">v2.4</span>
+  <span class="ver">v2.5</span>
 </header>
 
 <nav class="tabs">
