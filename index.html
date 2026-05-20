@@ -2,43 +2,49 @@
 <html lang="ko">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
 <title>도형 돌리고 뒤집기</title>
 <style>
   :root{
-    --bg:#fff7ec;--panel:#fffdf7;--ink:#2b2b2b;
+    --bg:#fff7ec;
     --btn:#ffe9d6;--btn-b:#ffb88c;
     --btn-flip:#dcefff;--btn-flip-b:#86bdff;
     --btn-ccw:#fff0e0;
   }
   *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;user-select:none;-webkit-user-select:none}
-  html,body{margin:0;padding:0;background:var(--bg);color:var(--ink);font-family:"Pretendard","Noto Sans KR","맑은 고딕",sans-serif;overscroll-behavior:none;height:100%;overflow:hidden}
-  body{height:100vh;display:flex;flex-direction:column}
-  header{display:flex;align-items:center;justify-content:space-between;padding:8px 18px;background:#ffd9a8;border-bottom:3px solid #f0b070;flex-shrink:0}
-  h1{margin:0;font-size:22px;letter-spacing:-.5px}
-  .ver{font-size:12px;color:#7a5a3a;background:#fff3df;border:1px solid #f0c98b;padding:3px 10px;border-radius:999px}
-  .tabs{display:flex;background:#fff3df;border-bottom:3px solid #f0b070;padding:0 14px;flex-shrink:0}
-  .tab{flex:1;max-width:260px;background:transparent;border:none;border-bottom:4px solid transparent;padding:10px 8px;font-size:18px;font-weight:800;color:#8a6a3a;cursor:pointer;letter-spacing:-.5px}
+  html,body{margin:0;padding:0;background:var(--bg);color:#2b2b2b;font-family:"Pretendard","Noto Sans KR","맑은 고딕",sans-serif;overscroll-behavior:none;overflow:hidden}
+  html,body{height:100vh;height:100dvh}
+  body{display:flex;flex-direction:column}
+
+  header{display:flex;align-items:center;justify-content:space-between;padding:6px 16px;background:#ffd9a8;border-bottom:2px solid #f0b070;flex-shrink:0}
+  h1{margin:0;font-size:clamp(16px,2.4vw,22px);letter-spacing:-.5px}
+  .ver{font-size:11px;color:#7a5a3a;background:#fff3df;border:1px solid #f0c98b;padding:2px 8px;border-radius:999px}
+
+  .tabs{display:flex;background:#fff3df;border-bottom:2px solid #f0b070;padding:0 10px;flex-shrink:0}
+  .tab{flex:1;max-width:260px;background:transparent;border:none;border-bottom:4px solid transparent;padding:8px 4px;font-size:clamp(13px,1.9vw,18px);font-weight:800;color:#8a6a3a;cursor:pointer;letter-spacing:-.5px;line-height:1.2}
   .tab.on{color:#c0421f;border-bottom-color:#c0421f;background:#fff7ec}
   .tab:active{transform:scale(.97)}
   .tab.dim{opacity:.4}
-  .screen{flex:1;display:none;padding:10px 14px;max-width:1400px;margin:0 auto;width:100%;min-height:0;overflow:hidden}
+
+  .screen{flex:1;display:none;padding:8px 12px;width:100%;max-width:1400px;margin:0 auto;min-height:0}
   .screen.on{display:flex;flex-direction:column;gap:8px}
 
   /* ===== 도형 고르기 ===== */
-  #pickScreen h2{margin:0 0 4px;font-size:20px;color:#7a4a1a;text-align:center}
-  .shapes{display:grid;grid-template-columns:repeat(6,1fr);gap:10px;flex:1;min-height:0}
+  #pickScreen h2{margin:0;font-size:clamp(15px,2vw,20px);color:#7a4a1a;text-align:center}
+  .shapes{display:grid;grid-template-columns:repeat(6,1fr);gap:8px;flex:1;min-height:0}
   @media (max-width:900px){.shapes{grid-template-columns:repeat(4,1fr)}}
-  .shape-btn{background:#fff;border:3px solid #e0c8a0;border-radius:16px;padding:6px;cursor:pointer;box-shadow:0 4px 0 #e0c8a0;display:flex;flex-direction:column;min-height:0}
-  .shape-btn:active{transform:translateY(2px);box-shadow:0 2px 0 #e0c8a0}
+  @media (max-width:520px){.shapes{grid-template-columns:repeat(3,1fr)}}
+  .shape-btn{background:#fff;border:3px solid #e0c8a0;border-radius:14px;padding:4px;cursor:pointer;box-shadow:0 3px 0 #e0c8a0;display:flex;flex-direction:column;min-height:0;overflow:hidden}
+  .shape-btn:active{transform:translateY(2px);box-shadow:0 1px 0 #e0c8a0}
   .shape-btn svg{display:block;width:100%;flex:1;min-height:0}
-  .shape-btn .label{font-size:16px;font-weight:800;color:#5a3a10;margin-top:2px;text-align:center}
+  .shape-btn .label{font-size:clamp(11px,1.5vw,15px);font-weight:800;color:#5a3a10;text-align:center;line-height:1.1}
 
   /* ===== 돌리기 화면 ===== */
-  .play-wrap{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:12px;flex:1;min-height:0}
-  @media (max-width:760px){.play-wrap{grid-template-columns:1fr}}
-  .stage{display:flex;justify-content:center;align-items:center;background:#fff;border:3px dashed #c9a878;border-radius:16px;padding:6px;aspect-ratio:1/1;min-height:0;max-height:100%}
-  .stage svg{width:100%;height:100%;touch-action:none}
+  .play-wrap{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:10px;flex:1;min-height:0}
+  @media (max-width:740px){.play-wrap{grid-template-columns:1fr;grid-template-rows:minmax(0,1fr) auto}}
+  .stage-wrap{display:flex;justify-content:center;align-items:center;min-height:0;min-width:0}
+  .stage{background:#fff;border:3px dashed #c9a878;border-radius:14px;padding:4px;display:block}
+  .stage svg{display:block;touch-action:none}
   .grid line{stroke:#d9c7a5;stroke-width:1.5;stroke-dasharray:4 4}
   .axis{stroke:#b58a4a;stroke-width:2}
   .ghost{fill:#f1e7d3;stroke:#b8a47a;stroke-width:2.5;stroke-dasharray:6 5}
@@ -46,42 +52,43 @@
   .shape{fill:#ffd9c2;stroke:#c0421f;stroke-width:3.5;stroke-linejoin:round}
 
   .panel{display:flex;flex-direction:column;gap:6px;min-height:0;overflow:hidden}
-  .curname{font-size:20px;font-weight:800;color:#7a4a1a;text-align:center;background:#fff8e8;border:2px dashed #e6c98f;border-radius:12px;padding:6px}
-  .status{background:#fff8e8;border:2px dashed #e6c98f;border-radius:12px;padding:6px;font-size:14px;color:#5a3a10;text-align:center;font-weight:700;display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:6px;min-height:40px}
-  .pill{background:#fff;border:2px solid #d9c7a5;border-radius:999px;padding:2px 10px}
+  .curname{font-size:clamp(14px,2vw,18px);font-weight:800;color:#7a4a1a;text-align:center;background:#fff8e8;border:2px dashed #e6c98f;border-radius:10px;padding:5px;flex-shrink:0}
+  .status{background:#fff8e8;border:2px dashed #e6c98f;border-radius:10px;padding:5px;font-size:13px;color:#5a3a10;text-align:center;font-weight:700;display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:4px;min-height:34px;flex-shrink:0}
+  .pill{background:#fff;border:2px solid #d9c7a5;border-radius:999px;padding:2px 9px}
   .pill b{color:#c0421f}
-
-  .controls{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;flex:1;min-height:0}
-  .btn{font-size:14px;font-weight:800;padding:4px 4px;border-radius:12px;border:3px solid var(--btn-b);background:var(--btn);cursor:pointer;color:#5a2c0a;line-height:1.1;transition:transform .08s,box-shadow .08s;box-shadow:0 4px 0 var(--btn-b);display:flex;flex-direction:column;align-items:center;justify-content:center}
-  .btn:active{transform:translateY(2px);box-shadow:0 2px 0 var(--btn-b)}
-  .btn b{font-size:18px}
-  .btn small{font-size:11px;font-weight:700;opacity:.85;margin-top:1px}
+  .controls{display:grid;grid-template-columns:repeat(4,1fr);gap:5px;flex:1;min-height:0}
+  .btn{font-weight:800;padding:2px;border-radius:10px;border:3px solid var(--btn-b);background:var(--btn);cursor:pointer;color:#5a2c0a;line-height:1.05;box-shadow:0 3px 0 var(--btn-b);display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:0}
+  .btn:active{transform:translateY(2px);box-shadow:0 1px 0 var(--btn-b)}
+  .btn b{font-size:clamp(13px,1.8vw,17px)}
+  .btn small{font-size:clamp(9px,1.2vw,11px);font-weight:700;opacity:.85}
   .btn.ccw{background:var(--btn-ccw)}
-  .btn.flip{background:var(--btn-flip);border-color:var(--btn-flip-b);box-shadow:0 4px 0 var(--btn-flip-b);color:#1e3e6c}
-  .btn.flip:active{box-shadow:0 2px 0 var(--btn-flip-b)}
-  .btn.reset{background:#e9f8df;border-color:#9fcf7e;box-shadow:0 4px 0 #9fcf7e;color:#234a13;grid-column:span 4;font-size:18px;flex-direction:row;gap:8px}
-  .btn.reset:active{box-shadow:0 2px 0 #9fcf7e}
+  .btn.flip{background:var(--btn-flip);border-color:var(--btn-flip-b);box-shadow:0 3px 0 var(--btn-flip-b);color:#1e3e6c}
+  .btn.flip:active{box-shadow:0 1px 0 var(--btn-flip-b)}
+  .btn.reset{background:#e9f8df;border-color:#9fcf7e;box-shadow:0 3px 0 #9fcf7e;color:#234a13;grid-column:span 4;flex-direction:row;gap:6px}
+  .btn.reset:active{box-shadow:0 1px 0 #9fcf7e}
+  .btn.reset b{font-size:clamp(14px,1.9vw,17px)}
 
   /* ===== 길찾기 ===== */
-  .maze-top{display:flex;align-items:center;gap:8px;flex-shrink:0}
-  .puz-pick{display:flex;gap:6px;flex:1}
-  .puz-btn{flex:1;font-size:16px;font-weight:800;padding:8px 4px;border-radius:12px;border:3px solid #c9a878;background:#fff;color:#5a3a10;cursor:pointer;box-shadow:0 3px 0 #c9a878}
+  .maze-top{display:flex;align-items:center;gap:6px;flex-shrink:0}
+  .puz-pick{display:flex;gap:5px;flex:1}
+  .puz-btn{flex:1;font-size:clamp(12px,1.7vw,15px);font-weight:800;padding:6px 2px;border-radius:10px;border:3px solid #c9a878;background:#fff;color:#5a3a10;cursor:pointer;box-shadow:0 3px 0 #c9a878;line-height:1.1}
   .puz-btn:active{transform:translateY(2px);box-shadow:0 1px 0 #c9a878}
   .puz-btn.on{background:#c0421f;border-color:#7a2c12;color:#fff;box-shadow:0 3px 0 #7a2c12}
-  .back{background:#fff;border:3px solid #c9a878;border-radius:12px;padding:8px 14px;font-size:15px;font-weight:800;color:#5a3a10;cursor:pointer;box-shadow:0 3px 0 #c9a878;white-space:nowrap}
+  .back{background:#fff;border:3px solid #c9a878;border-radius:10px;padding:6px 12px;font-size:clamp(12px,1.6vw,14px);font-weight:800;color:#5a3a10;cursor:pointer;box-shadow:0 3px 0 #c9a878;white-space:nowrap}
   .back:active{transform:translateY(2px);box-shadow:0 1px 0 #c9a878}
-  .maze-stage{display:flex;justify-content:center;align-items:center;background:#8b6a3a;border:4px solid #5a3a10;border-radius:16px;padding:6px;flex:1;min-height:0}
-  .maze-stage svg{height:100%;width:auto;max-width:100%;touch-action:none;aspect-ratio:1/1}
-  .maze-status{background:#fff;border:3px solid #c9a878;border-radius:12px;padding:10px;font-size:16px;color:#5a3a10;font-weight:800;text-align:center;flex-shrink:0}
-  .maze-status.ok{background:#dff5cf;border-color:#7bc96f;color:#234a13;font-size:18px}
+  .maze-wrap{display:flex;justify-content:center;align-items:center;flex:1;min-height:0;min-width:0}
+  .maze-stage{background:#8b6a3a;border:4px solid #5a3a10;border-radius:14px;padding:5px;display:block}
+  .maze-stage svg{display:block;touch-action:none}
+  .maze-status{background:#fff;border:3px solid #c9a878;border-radius:10px;padding:8px;font-size:clamp(13px,1.8vw,16px);color:#5a3a10;font-weight:800;text-align:center;flex-shrink:0}
+  .maze-status.ok{background:#dff5cf;border-color:#7bc96f;color:#234a13}
+
   .cell-bg{fill:#a47b48;stroke:#6a4a20;stroke-width:1}
   .road-fill{fill:#f1d9aa}
-  .road-stroke{fill:none;stroke:#7a5a2a;stroke-width:2}
-  .rot-cell .road-fill{fill:#fff3a6}
   .rot-cell{cursor:pointer}
   .rot-ring{fill:none;stroke:#c0421f;stroke-width:2.5;stroke-dasharray:5 4}
   .num-badge{fill:#c0421f}
   .num-text{fill:#fff;font-size:18px;font-weight:900;font-family:sans-serif;text-anchor:middle;dominant-baseline:central}
+
   .celebrate{position:fixed;inset:0;background:rgba(0,0,0,.5);display:none;align-items:center;justify-content:center;z-index:100}
   .celebrate.on{display:flex;animation:fade .25s}
   .celebrate-card{background:#fff;border-radius:24px;padding:24px 34px;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,.3);animation:pop .3s}
@@ -92,7 +99,7 @@
 <body>
 <header>
   <h1>🔄 도형 돌리고 뒤집기</h1>
-  <span class="ver">v1.4</span>
+  <span class="ver">v1.5</span>
 </header>
 
 <nav class="tabs">
@@ -109,12 +116,14 @@
 <section class="screen" id="playScreen">
   <div class="curname" id="curname"></div>
   <div class="play-wrap">
-    <div class="stage">
-      <svg viewBox="0 0 600 600" id="stage">
-        <g class="grid" id="grid"></g>
-        <g><polygon class="ghost" id="ghost"></polygon></g>
-        <g class="shape-g" id="shapeG"><polygon class="shape" id="shape"></polygon></g>
-      </svg>
+    <div class="stage-wrap">
+      <div class="stage">
+        <svg id="stage" viewBox="0 0 600 600">
+          <g class="grid" id="grid"></g>
+          <g><polygon class="ghost" id="ghost"></polygon></g>
+          <g class="shape-g" id="shapeG"><polygon class="shape" id="shape"></polygon></g>
+        </svg>
+      </div>
     </div>
     <div class="panel">
       <div class="status" id="status"></div>
@@ -131,7 +140,7 @@
         <button class="btn flip" data-flip="R"><b>➡ 오른쪽</b><small>뒤집기</small></button>
         <button class="btn flip" data-flip="U"><b>⬆ 위</b><small>뒤집기</small></button>
         <button class="btn flip" data-flip="D"><b>⬇ 아래</b><small>뒤집기</small></button>
-        <button class="btn reset" id="reset">🔄 처음으로</button>
+        <button class="btn reset" id="reset"><b>🔄 처음으로</b></button>
       </div>
     </div>
   </div>
@@ -142,8 +151,10 @@
     <div class="puz-pick" id="puzPick"></div>
     <button class="back" id="mazeReset">🔄 다시</button>
   </div>
-  <div class="maze-stage">
-    <svg viewBox="0 0 540 540" id="maze"></svg>
+  <div class="maze-wrap">
+    <div class="maze-stage">
+      <svg id="maze" viewBox="0 0 540 540"></svg>
+    </div>
   </div>
   <div class="maze-status" id="mazeStatus">길 조각을 톡 눌러 90°씩 돌려봐. 🐱➡️🏆</div>
 </section>
@@ -164,6 +175,9 @@ function el(tag, attrs={}, parent){
   for(const k in attrs) e.setAttribute(k, attrs[k]);
   if(parent) parent.appendChild(e);
   return e;
+}
+function clear(node){
+  while(node.firstChild) node.removeChild(node.firstChild);
 }
 
 /* ===================== 도형 ===================== */
@@ -232,7 +246,7 @@ function updateStatus(){
   let txt = `<span class="pill">회전 <b>${r}°</b></span>`;
   if(state.fx===-1) txt += `<span class="pill">↔ 좌우뒤집힘</span>`;
   if(state.fy===-1) txt += `<span class="pill">↕ 상하뒤집힘</span>`;
-  if(r===0 && state.fx===1 && state.fy===1) txt = `<span class="pill">처음 상태야</span>`;
+  if(r===0 && state.fx===1 && state.fy===1) txt = `<span class="pill">처음 상태</span>`;
   statusEl.innerHTML = txt;
 }
 document.querySelectorAll('[data-rot]').forEach(b=>{
@@ -270,7 +284,7 @@ function switchTab(t){
   document.getElementById('pickScreen').classList.toggle('on', t==='pick');
   document.getElementById('playScreen').classList.toggle('on', t==='play');
   document.getElementById('mazeScreen').classList.toggle('on', t==='maze');
-  if(t==='maze') setTimeout(drawMaze, 0);
+  requestAnimationFrame(()=>{ fitStages(); if(t==='maze') drawMaze(); });
 }
 document.querySelectorAll('.tab').forEach(b=>{
   b.onclick = ()=>{
@@ -286,6 +300,32 @@ document.querySelectorAll('.tab').forEach(b=>{
 });
 document.getElementById('tabPlay').classList.add('dim');
 
+/* ===================== 사이즈 자동 맞춤 ===================== */
+function fitStages(){
+  // 도형 스테이지
+  const sw = document.querySelector('.stage-wrap');
+  if(sw){
+    const W = sw.clientWidth, H = sw.clientHeight;
+    const S = Math.max(120, Math.floor(Math.min(W, H) - 6));
+    const stage = document.querySelector('.stage');
+    if(stage){ stage.style.width=S+'px'; stage.style.height=S+'px'; }
+    const sv = document.getElementById('stage');
+    if(sv){ sv.setAttribute('width', S-8); sv.setAttribute('height', S-8); }
+  }
+  // 미로 스테이지
+  const mw = document.querySelector('.maze-wrap');
+  if(mw){
+    const W = mw.clientWidth, H = mw.clientHeight;
+    const S = Math.max(120, Math.floor(Math.min(W, H) - 6));
+    const ms = document.querySelector('.maze-stage');
+    if(ms){ ms.style.width=S+'px'; ms.style.height=S+'px'; }
+    const sv = document.getElementById('maze');
+    if(sv){ sv.setAttribute('width', S-10); sv.setAttribute('height', S-10); }
+  }
+}
+window.addEventListener('resize', fitStages);
+window.addEventListener('orientationchange', ()=>setTimeout(fitStages,100));
+
 /* ===================== 🧩 길찾기 ===================== */
 const ROT_DIR = {N:'E',E:'S',S:'W',W:'N'};
 const OPP = {N:'S',E:'W',S:'N',W:'E'};
@@ -293,11 +333,11 @@ const DXY = {N:[0,-1],E:[1,0],S:[0,1],W:[-1,0]};
 const BASE_SIDES = {S:['E','W'], C:['N','E'], T:['E','S','W'], X:['N','E','S','W'], STUB:['E']};
 function sidesOf(type, rot){
   let s = BASE_SIDES[type].slice();
-  for(let i=0;i<((rot%4)+4)%4;i++) s = s.map(d=>ROT_DIR[d]);
+  const n = ((rot%4)+4)%4;
+  for(let i=0;i<n;i++) s = s.map(d=>ROT_DIR[d]);
   return s;
 }
 
-// 5x5 퍼즐
 const PUZZLES = [
   { name:'쉬움', size:5, cells:[
     {c:0,r:2,type:'STUB',rot:0,start:true},
@@ -308,25 +348,25 @@ const PUZZLES = [
   ]},
   { name:'보통', size:5, cells:[
     {c:0,r:3,type:'STUB',rot:0,start:true},
-    {c:1,r:3,type:'C',rot:0,rotatable:true,num:1},   // 정답 rot=3
+    {c:1,r:3,type:'C',rot:0,rotatable:true,num:1},
     {c:1,r:2,type:'S',rot:1},
-    {c:1,r:1,type:'C',rot:2,rotatable:true,num:2},   // 정답 rot=1
+    {c:1,r:1,type:'C',rot:2,rotatable:true,num:2},
     {c:2,r:1,type:'S',rot:0},
-    {c:3,r:1,type:'C',rot:0,rotatable:true,num:3},   // 정답 rot=2
+    {c:3,r:1,type:'C',rot:0,rotatable:true,num:3},
     {c:3,r:2,type:'S',rot:1},
-    {c:3,r:3,type:'C',rot:3,rotatable:true,num:4},   // 정답 rot=0
+    {c:3,r:3,type:'C',rot:3,rotatable:true,num:4},
     {c:4,r:3,type:'STUB',rot:2,end:true},
   ]},
   { name:'어려움', size:5, cells:[
-    {c:0,r:0,type:'STUB',rot:1,start:true},          // 남쪽 개구
+    {c:0,r:0,type:'STUB',rot:1,start:true},
     {c:0,r:1,type:'S',rot:1},
-    {c:0,r:2,type:'C',rot:1,rotatable:true,num:1},   // 정답 rot=0
-    {c:1,r:2,type:'S',rot:1,rotatable:true,num:2},   // 정답 rot=0
-    {c:2,r:2,type:'S',rot:1,rotatable:true,num:3},   // 정답 rot=0
-    {c:3,r:2,type:'S',rot:1,rotatable:true,num:4},   // 정답 rot=0
-    {c:4,r:2,type:'C',rot:3,rotatable:true,num:5},   // 정답 rot=2
+    {c:0,r:2,type:'C',rot:1,rotatable:true,num:1},
+    {c:1,r:2,type:'S',rot:1,rotatable:true,num:2},
+    {c:2,r:2,type:'S',rot:1,rotatable:true,num:3},
+    {c:3,r:2,type:'S',rot:1,rotatable:true,num:4},
+    {c:4,r:2,type:'C',rot:3,rotatable:true,num:5},
     {c:4,r:3,type:'S',rot:1},
-    {c:4,r:4,type:'STUB',rot:3,end:true},            // 북쪽 개구
+    {c:4,r:4,type:'STUB',rot:3,end:true},
   ]},
 ];
 
@@ -340,7 +380,7 @@ function buildPuzPick(){
   PUZZLES.forEach((p,i)=>{
     const b = document.createElement('button');
     b.className = 'puz-btn' + (i===curPuz?' on':'');
-    b.textContent = (i+1)+'단계 ('+p.name+')';
+    b.textContent = (i+1)+'단계 '+p.name;
     b.onclick = ()=>{ curPuz = i; loadPuz(); };
     wrap.appendChild(b);
   });
@@ -352,14 +392,15 @@ function loadPuz(){
   mazeState = JSON.parse(JSON.stringify(p));
   drawMaze();
   checkMaze();
+  document.getElementById('mazeStatus').classList.remove('ok');
 }
 
 function drawMaze(){
   if(!mazeState) return;
   const p = mazeState;
   const SZ = 540, N = p.size, CS = SZ/N;
-  mazeSvg.innerHTML = '';
-  // 배경 그리드
+  clear(mazeSvg);
+  // 배경
   for(let r=0;r<N;r++) for(let c=0;c<N;c++){
     el('rect',{x:c*CS,y:r*CS,width:CS,height:CS,class:'cell-bg'},mazeSvg);
   }
@@ -370,22 +411,19 @@ function drawMaze(){
       g.setAttribute('class','rot-cell');
       el('rect',{x:3,y:3,width:CS-6,height:CS-6,rx:8,class:'rot-ring'},g);
     }
-    // 회전된 길 조각 — SVG transform 으로
     const piece = el('g',{transform:`rotate(${cell.rot*90} ${CS/2} ${CS/2})`},g);
     drawRoadInto(piece, cell.type, CS);
-    cell._piece = piece;
-    // 아이콘
     if(cell.start || cell.end){
       const t = el('text',{x:CS/2,y:CS/2+4,'text-anchor':'middle','dominant-baseline':'central','font-size':CS*0.5},g);
       t.textContent = cell.start ? '🐱' : '🏆';
     }
-    // 번호
     if(cell.num){
       el('circle',{cx:CS-14,cy:14,r:13,class:'num-badge'},g);
       const bt = el('text',{x:CS-14,y:14,class:'num-text'},g);
       bt.textContent = cell.num;
     }
     if(cell.rotatable){
+      g.style.cursor='pointer';
       g.addEventListener('click',()=>{
         cell.rot = (cell.rot+1)%4;
         piece.setAttribute('transform',`rotate(${cell.rot*90} ${CS/2} ${CS/2})`);
@@ -397,7 +435,6 @@ function drawMaze(){
 
 function drawRoadInto(parent, type, CS){
   const M = CS/2, RW = CS*0.42, half = RW/2;
-  // 중앙
   el('rect',{x:M-half,y:M-half,width:RW,height:RW,class:'road-fill'},parent);
   const sides = BASE_SIDES[type];
   sides.forEach(d=>{
@@ -406,7 +443,6 @@ function drawRoadInto(parent, type, CS){
     if(d==='S') el('rect',{x:M-half,y:M-half,width:RW,height:CS-(M-half),class:'road-fill'},parent);
     if(d==='N') el('rect',{x:M-half,y:0,width:RW,height:M+half,class:'road-fill'},parent);
   });
-  // 테두리(검은 외곽)는 생략 — 길 색만으로 충분
 }
 
 function checkMaze(){
@@ -415,7 +451,7 @@ function checkMaze(){
   p.cells.forEach(c=>{ grid[c.c+','+c.r] = c; });
   const startCell = p.cells.find(c=>c.start);
   const endCell = p.cells.find(c=>c.end);
-  if(!startCell || !endCell){ return; }
+  if(!startCell || !endCell) return;
   const queue = [startCell];
   const visited = new Set([startCell.c+','+startCell.r]);
   let connected = false;
@@ -458,8 +494,10 @@ document.getElementById('celebrate').addEventListener('click',(e)=>{
   if(e.target.id==='celebrate') e.currentTarget.classList.remove('on');
 });
 
-buildPuzPick();
 loadPuz();
+requestAnimationFrame(fitStages);
+setTimeout(fitStages, 100);
+setTimeout(fitStages, 500);
 </script>
 </body>
 </html>
