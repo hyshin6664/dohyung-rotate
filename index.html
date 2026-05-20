@@ -106,7 +106,7 @@
 <body>
 <header>
   <h1>🔄 도형 돌리고 뒤집기</h1>
-  <span class="ver">v1.8</span>
+  <span class="ver">v1.9</span>
 </header>
 
 <nav class="tabs">
@@ -117,7 +117,7 @@
 
 <section class="screen on" id="pickScreen">
   <div class="draw-top">
-    <div class="draw-hint" id="drawHint">격자 점을 손가락으로 톡! 톡! 눌러 도형을 그려봐. (3개 이상)</div>
+    <div class="draw-hint" id="drawHint">손가락으로 쓱~ 그려봐. 격자에 자동으로 맞춰줄게!</div>
   </div>
   <div class="draw-wrap">
     <div class="draw-stage">
@@ -203,12 +203,14 @@ function clear(node){
 }
 
 /* ===================== 도형 그리기 ===================== */
-const DRAW_VB = 600, DRAW_MARGIN = 40, DRAW_GRID = 5;
+const DRAW_VB = 600, DRAW_MARGIN = 40, DRAW_GRID = 4;
 const DRAW_CELL = (DRAW_VB - DRAW_MARGIN*2) / DRAW_GRID;
 const dToX = gx => DRAW_MARGIN + gx * DRAW_CELL;
 const dToY = gy => DRAW_MARGIN + gy * DRAW_CELL;
 const drawSvg = document.getElementById('drawSvg');
-let drawnPts = [];
+let rawTrail = [];      // 손가락 따라간 원시 좌표 (SVG 단위)
+let snappedPts = [];    // 격자에 붙은 다각형 점 (그리드 좌표)
+let isDrawing = false;
 
 function buildDrawGrid(){
   clear(drawSvg);
@@ -219,63 +221,141 @@ function buildDrawGrid(){
     const h = el('line',{x1:dToX(0),y1:dToY(i),x2:dToX(DRAW_GRID),y2:dToY(i),stroke:'#d9c7a5','stroke-width':1.5,'stroke-dasharray':'4 4'},drawSvg);
     if(i===0||i===DRAW_GRID) h.setAttribute('stroke','#b58a4a'), h.setAttribute('stroke-width',2), h.removeAttribute('stroke-dasharray');
   }
-  // 격자 점 + 탭 영역
+  // 격자 점
   for(let gx=0;gx<=DRAW_GRID;gx++){
     for(let gy=0;gy<=DRAW_GRID;gy++){
       el('circle',{cx:dToX(gx),cy:dToY(gy),r:5,class:'dot'},drawSvg);
-      const tap = el('circle',{cx:dToX(gx),cy:dToY(gy),r:24,class:'dot-tap'},drawSvg);
-      tap.addEventListener('click',()=>addDrawPoint(gx,gy));
     }
   }
-  // 선/면 그룹
-  const linesG = el('g',{id:'drawLines'},drawSvg);
-  const ptsG = el('g',{id:'drawHotPts'},drawSvg);
+  // 그룹들
+  el('polyline',{id:'trailLive',fill:'none',stroke:'#ffb88c','stroke-width':4,'stroke-linecap':'round','stroke-linejoin':'round','stroke-dasharray':'4 6'},drawSvg);
+  el('g',{id:'shapeG2'},drawSvg);
+  el('g',{id:'snapDots'},drawSvg);
 }
 
-function addDrawPoint(gx, gy){
-  // 같은 점 연속 무시
-  const last = drawnPts[drawnPts.length-1];
-  if(last && last[0]===gx && last[1]===gy) return;
-  // 첫 점 근처 다시 누르면 자동 닫기는 안함 (완성 버튼 사용)
-  drawnPts.push([gx,gy]);
-  redrawShape();
+function pointerToSvg(e){
+  const r = drawSvg.getBoundingClientRect();
+  const x = (e.clientX - r.left) / r.width * DRAW_VB;
+  const y = (e.clientY - r.top) / r.height * DRAW_VB;
+  return [x, y];
+}
+function snapXY(x, y){
+  const gx = Math.round((x - DRAW_MARGIN) / DRAW_CELL);
+  const gy = Math.round((y - DRAW_MARGIN) / DRAW_CELL);
+  return [Math.max(0, Math.min(DRAW_GRID, gx)), Math.max(0, Math.min(DRAW_GRID, gy))];
 }
 
-function redrawShape(){
-  // 기존 선/점 지우기
-  const linesG = document.getElementById('drawLines');
-  const ptsG = document.getElementById('drawHotPts');
-  clear(linesG); clear(ptsG);
-  if(drawnPts.length === 0){
-    document.getElementById('drawHint').textContent = '격자 점을 손가락으로 톡! 톡! 눌러 도형을 그려봐. (3개 이상)';
-    return;
-  }
-  if(drawnPts.length >= 3){
-    // 다각형 (닫힌 모양)
-    const pts = drawnPts.map(p=>`${dToX(p[0])},${dToY(p[1])}`).join(' ');
-    el('polygon',{points:pts,class:'draw-fill'},linesG);
-  } else {
-    // 점 1~2개일 땐 선만
-    for(let i=0;i<drawnPts.length-1;i++){
-      const a=drawnPts[i],b=drawnPts[i+1];
-      el('line',{x1:dToX(a[0]),y1:dToY(a[1]),x2:dToX(b[0]),y2:dToY(b[1]),class:'draw-line'},linesG);
-    }
-  }
-  // 찍은 점 강조
-  drawnPts.forEach((p,i)=>{
-    el('circle',{cx:dToX(p[0]),cy:dToY(p[1]),r:9,class:'dot hot'},ptsG);
+drawSvg.addEventListener('pointerdown', e=>{
+  e.preventDefault();
+  drawSvg.setPointerCapture(e.pointerId);
+  isDrawing = true;
+  rawTrail = [pointerToSvg(e)];
+  snappedPts = [];
+  clear(document.getElementById('shapeG2'));
+  clear(document.getElementById('snapDots'));
+  updateLive();
+});
+drawSvg.addEventListener('pointermove', e=>{
+  if(!isDrawing) return;
+  rawTrail.push(pointerToSvg(e));
+  updateLive();
+});
+drawSvg.addEventListener('pointerup', e=>{
+  if(!isDrawing) return;
+  isDrawing = false;
+  finalizeShape();
+});
+drawSvg.addEventListener('pointercancel', ()=>{ isDrawing = false; });
+
+function updateLive(){
+  const tl = document.getElementById('trailLive');
+  tl.setAttribute('points', rawTrail.map(p=>p.join(',')).join(' '));
+}
+
+function finalizeShape(){
+  // 1. 원시 경로를 격자 점들로 스냅
+  const snaps = [];
+  rawTrail.forEach(([x,y])=>{
+    const g = snapXY(x,y);
+    const last = snaps[snaps.length-1];
+    if(!last || last[0]!==g[0] || last[1]!==g[1]) snaps.push(g);
   });
-  document.getElementById('drawHint').textContent = `점 ${drawnPts.length}개${drawnPts.length>=3?' — 완성 가능!':' — 더 찍어봐'}`;
+  // 2. 같은 점으로 되돌아오는 백트랙 제거 (A-B-A 패턴 -> A)
+  for(let i=1;i<snaps.length-1;){
+    if(snaps[i-1][0]===snaps[i+1][0] && snaps[i-1][1]===snaps[i+1][1]){
+      snaps.splice(i, 2); // i, i+1 제거
+      if(i>0) i--;
+    } else i++;
+  }
+  // 3. 일직선 위에 있는 중간점 제거 (a-b-c 공선 -> b 삭제)
+  for(let i=1;i<snaps.length-1;){
+    const a=snaps[i-1], b=snaps[i], c=snaps[i+1];
+    const cross = (b[0]-a[0])*(c[1]-a[1]) - (b[1]-a[1])*(c[0]-a[0]);
+    if(cross===0){ snaps.splice(i,1); }
+    else i++;
+  }
+  // 4. 끝점이 시작점과 같으면 닫힌 도형으로 마지막 중복 제거
+  if(snaps.length>=2){
+    const f=snaps[0], l=snaps[snaps.length-1];
+    if(f[0]===l[0] && f[1]===l[1]) snaps.pop();
+  }
+  snappedPts = snaps;
+
+  // 라이브 트레일 지우기
+  document.getElementById('trailLive').setAttribute('points','');
+
+  const sg = document.getElementById('shapeG2');
+  const dg = document.getElementById('snapDots');
+  clear(sg); clear(dg);
+
+  if(snappedPts.length >= 3){
+    const ptsStr = snappedPts.map(p=>`${dToX(p[0])},${dToY(p[1])}`).join(' ');
+    el('polygon',{points:ptsStr,class:'draw-fill'},sg);
+    snappedPts.forEach(p=>{
+      el('circle',{cx:dToX(p[0]),cy:dToY(p[1]),r:8,class:'dot hot'},dg);
+    });
+    document.getElementById('drawHint').textContent = `좋아! 꼭짓점 ${snappedPts.length}개 — ✅ 완성! 누르면 돌리러 가자`;
+  } else if(snappedPts.length > 0){
+    for(let i=0;i<snappedPts.length-1;i++){
+      const a=snappedPts[i],b=snappedPts[i+1];
+      el('line',{x1:dToX(a[0]),y1:dToY(a[1]),x2:dToX(b[0]),y2:dToY(b[1]),class:'draw-line'},sg);
+    }
+    snappedPts.forEach(p=>el('circle',{cx:dToX(p[0]),cy:dToY(p[1]),r:8,class:'dot hot'},dg));
+    document.getElementById('drawHint').textContent = '조금 더 그려야 도형이 돼! (꼭짓점 3개 이상)';
+  } else {
+    document.getElementById('drawHint').textContent = '손가락으로 쓱~ 그려봐. 격자에 자동으로 맞춰줄게!';
+  }
 }
 
-document.getElementById('drawUndo').onclick = ()=>{ drawnPts.pop(); redrawShape(); };
-document.getElementById('drawClear').onclick = ()=>{ drawnPts = []; redrawShape(); };
+document.getElementById('drawUndo').onclick = ()=>{
+  if(snappedPts.length){ snappedPts.pop(); }
+  const sg = document.getElementById('shapeG2');
+  const dg = document.getElementById('snapDots');
+  clear(sg); clear(dg);
+  if(snappedPts.length>=3){
+    const ptsStr = snappedPts.map(p=>`${dToX(p[0])},${dToY(p[1])}`).join(' ');
+    el('polygon',{points:ptsStr,class:'draw-fill'},sg);
+  } else {
+    for(let i=0;i<snappedPts.length-1;i++){
+      const a=snappedPts[i],b=snappedPts[i+1];
+      el('line',{x1:dToX(a[0]),y1:dToY(a[1]),x2:dToX(b[0]),y2:dToY(b[1]),class:'draw-line'},sg);
+    }
+  }
+  snappedPts.forEach(p=>el('circle',{cx:dToX(p[0]),cy:dToY(p[1]),r:8,class:'dot hot'},dg));
+};
+document.getElementById('drawClear').onclick = ()=>{
+  snappedPts = []; rawTrail = [];
+  clear(document.getElementById('shapeG2'));
+  clear(document.getElementById('snapDots'));
+  document.getElementById('trailLive').setAttribute('points','');
+  document.getElementById('drawHint').textContent = '손가락으로 쓱~ 그려봐. 격자에 자동으로 맞춰줄게!';
+};
 document.getElementById('drawDone').onclick = ()=>{
-  if(drawnPts.length < 3){
-    document.getElementById('drawHint').textContent = '⚠ 점을 3개 이상 찍어야 해!';
+  if(snappedPts.length < 3){
+    document.getElementById('drawHint').textContent = '⚠ 꼭짓점이 3개 이상이어야 도형이 돼!';
     return;
   }
-  const myShape = { id:'MY', name:'내가 그린 도형', pts: drawnPts.slice() };
+  const myShape = { id:'MY', name:'내가 그린 도형', pts: snappedPts.slice() };
   openPlay(myShape);
 };
 
@@ -299,7 +379,7 @@ const SHAPES = [
 ];
 
 
-const VB = 600, MARGIN = 40, GRID = 5;
+const VB = 600, MARGIN = 40, GRID = 4;
 const CELL = (VB - MARGIN*2) / GRID;
 const toX = gx => MARGIN + gx * CELL;
 const toY = gy => MARGIN + gy * CELL;
